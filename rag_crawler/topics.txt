@@ -1,0 +1,20 @@
+# RAG Crawler 主题列表（一行一个主题，以 # 开头的行为注释）
+# 与 OPENCLAW_RAG_MISSION 知识方向一致，可按需增删。
+# 安装后路径：/opt/rag-crawler/topics.txt
+
+渗透测试 全流程 PTES
+CVE 漏洞利用 PoC 影响范围 修复建议
+Web 安全 SQL 注入 XSS CSRF
+Web 安全 目录遍历 文件上传漏洞
+网络扫描 Nmap Masscan 端口服务识别
+漏洞扫描 CVE 检测 扫描器
+暴力破解 弱口令 密码爆破
+后渗透 权限维持 横向移动 提权
+Metasploit 利用框架 模块使用
+HackTricks 实战技巧
+OWASP Top 10 检测与修复
+计算机网络 协议基础 TCP IP
+CTF Writeup 典型利用链
+Nmap 使用与结果解读
+SQLMap 注入检测与利用
+Nuclei 漏洞扫描 模板

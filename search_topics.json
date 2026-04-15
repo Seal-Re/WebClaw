@@ -1,0 +1,145 @@
+{
+    "one_time_bootstrap": [
+      {
+        "id": "net_basic",
+        "engine": "tavily",
+        "query": "计算机网络 基础 总结 TCP/IP HTTP HTTPS DNS 路由 NAT VPN",
+        "max_results": 10,
+        "deep": true
+      },
+      {
+        "id": "pentest_flow",
+        "engine": "tavily",
+        "query": "渗透测试 全流程 PTES 信息收集 漏洞分析 利用 后渗透 报告 实战 总结",
+        "max_results": 10,
+        "deep": true
+      },
+      {
+        "id": "web_vuln_overview",
+        "engine": "tavily",
+        "query": "Web 安全 SQL 注入 XSS CSRF SSRF 文件上传 命令注入 代码注入 综合 实战 总结",
+        "max_results": 12,
+        "deep": true
+      },
+      {
+        "id": "framework_vuln_java",
+        "engine": "tavily",
+        "query": "Struts2 Shiro Fastjson Tomcat WebLogic JBoss 典型 漏洞 分析 writeup",
+        "max_results": 12,
+        "deep": true
+      },
+      {
+        "id": "framework_vuln_python",
+        "engine": "tavily",
+        "query": "Django Flask SSTI RCE Web 漏洞 实战 案例 分析",
+        "max_results": 10,
+        "deep": true
+      },
+      {
+        "id": "priv_esc_linux",
+        "engine": "tavily",
+        "query": "Linux 提权 总结 SUID 内核漏洞 错误配置 提权脚本 实战",
+        "max_results": 10,
+        "deep": true
+      },
+      {
+        "id": "priv_esc_windows",
+        "engine": "tavily",
+        "query": "Windows 提权 UAC 绕过 服务错误配置 Token 窃取 提权 实战",
+        "max_results": 10,
+        "deep": true
+      },
+      {
+        "id": "tools_recon",
+        "engine": "tavily",
+        "query": "nmap masscan amass subfinder whatweb 信息收集 工具 用法 对比 渗透测试",
+        "max_results": 10,
+        "deep": true
+      },
+      {
+        "id": "tools_vulnscan",
+        "engine": "tavily",
+        "query": "nuclei xray OpenVAS Nessus 漏洞扫描 工具 使用 教程 渗透测试 实战",
+        "max_results": 10,
+        "deep": true
+      },
+      {
+        "id": "tools_exploit",
+        "engine": "tavily",
+        "query": "Metasploit msfconsole msfvenom Impacket psexec wmiexec secretsdump 后渗透 实战",
+        "max_results": 10,
+        "deep": true
+      },
+      {
+        "id": "vulnhub_writeups",
+        "engine": "tavily",
+        "query": "Vulnhub Tomato Earth Jangow Phineas Odin writeup 渗透 测试 攻击 流程",
+        "max_results": 15,
+        "deep": true
+      },
+      {
+        "id": "vulhub_writeups",
+        "engine": "tavily",
+        "query": "Vulhub S2-045 S2-057 ThinkPHP 5.0.23 RCE Fastjson Django Flask CVE writeup",
+        "max_results": 15,
+        "deep": true
+      },
+      {
+        "id": "bugku_par_writeups",
+        "engine": "tavily",
+        "query": "Bugku PAR 渗透测试 项目 writeup 攻击 链路 详细 步骤",
+        "max_results": 10,
+        "deep": true
+      }
+    ],
+    "daily_refresh": [
+      {
+        "id": "latest_web_cve_cn",
+        "engine": "baidu",
+        "query": "近期 Web 中间件 高危 漏洞 分析 报告 Struts2 Tomcat WebLogic JBoss Fastjson Django Flask",
+        "max_results": 10
+      },
+      {
+        "id": "latest_web_cve_global",
+        "engine": "tavily",
+        "query": "latest critical web middleware vulnerabilities analysis \"Struts2\" \"Tomcat\" \"Fastjson\" \"Django\" \"Flask\"",
+        "max_results": 10,
+        "deep": true
+      },
+      {
+        "id": "weekly_cve_summary_cn",
+        "engine": "baidu",
+        "query": "每周 CVE 高危 漏洞 汇总 网络安全 报告",
+        "max_results": 10
+      },
+      {
+        "id": "tools_updates",
+        "engine": "tavily",
+        "query": "nmap Metasploit xray nuclei 新版本 更新 日志 渗透测试 相关",
+        "max_results": 8,
+        "deep": false
+      }
+    ],
+    "weekly_refresh": [
+      {
+        "id": "pentest_cases",
+        "engine": "tavily",
+        "query": "penetration testing case study full chain report exploitation to remediation",
+        "max_results": 10,
+        "deep": true
+      },
+      {
+        "id": "redteam_reports_cn",
+        "engine": "baidu",
+        "query": "红队 演练 案例 披露 报告 攻击链 解析",
+        "max_results": 10
+      },
+      {
+        "id": "ctf_web_writeups",
+        "engine": "tavily",
+        "query": "CTF Web 渗透 题目 writeup 高质量 SQL 注入 XSS SSRF 文件上传",
+        "max_results": 12,
+        "deep": true
+      }
+    ]
+  }
