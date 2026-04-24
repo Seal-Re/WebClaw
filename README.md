@@ -1,189 +1,214 @@
-# WebClaw
+# WebClaw · RAG-Enhanced LLM Pentest Platform
 
-**基于大模型的自动化渗透测试平台** — 第十七届中国大学生服务外包创新创业大赛 · A10 赛题
+> **An LLM-guided pentest orchestrator backed by a 24/7 self-updating Qdrant knowledge base — PTES 7-phase, JSON-Schema-validated module contracts, Python crawler + Node.js skills.**
+>
+> 大模型驱动、RAG 知识库持续增强的自动化渗透测试平台。OpenClaw Agent 全天候爬取安全情报写入 Qdrant，LLM 决策引擎根据语义检索结果规划下一步工具调用，覆盖 PTES 七阶段完整渗透测试流程。服务外包大赛 A10 参赛项目。
 
-WebClaw 将大语言模型的推理决策能力与持续更新的 RAG 知识库相结合，实现「决策—执行—验证—留痕」的自动化安全测试闭环。平台采用模块化智能体协作架构，支持 GPT、Claude、DeepSeek 等主流模型接口，集成覆盖全渗透测试流程的安全工具，并生成可追溯的企业级渗透测试报告。
+[English](#english) · [中文](#中文)
 
----
-
-## 架构概览
-
-```
-Orchestrator（编排器）— 状态机 + 阶段内任务表（唯一事实来源）
-        │
-        ├── Knowledge Module（知识模块）
-        │       ├── (OpenClaw)  24/7 联网爬取 → 精炼 → 写入 Qdrant
-        │       └── (RAG)       语义检索，为决策引擎提供知识增强
-        │
-        ├── LLM Decision Engine（决策引擎）
-        │       接收阶段/目标上下文/知识片段，输出下一步动作
-        │
-        ├── Skill Executor（工具执行器）
-        │       注册并执行原子化安全工具（Nmap、SQLMap 等），可选沙箱
-        │
-        └── Trace & Report Service（留痕与报告服务）
-                收集事件流，生成含复现步骤、修复建议、合规映射的企业级报告
-```
-
-**攻击流程（PTES 七阶段映射）**：Pre-engagement → Intelligence Gathering → Threat Modeling → Vulnerability Analysis → Exploitation → Post-Exploitation → Reporting
-
-**设计原则**：
-- Orchestrator 是唯一有状态的模块；攻击图仅作为静态规范
-- 短时任务同步调用（含超时），长时/批量任务异步队列
-- 阶段内所有子任务终态后方可迁移至下一阶段
-- 重复防控以「重复警告」注入 LLM 输入，无独立状态
-- 所有跨模块接口具备 JSON Schema，Mock 通过 schema 校验
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python)
+![Node.js](https://img.shields.io/badge/Node.js-ESM-5FA04E?logo=nodedotjs)
+![Qdrant](https://img.shields.io/badge/VectorDB-Qdrant-DC244C)
+![LLM](https://img.shields.io/badge/LLM-OpenAI%20Compatible-412991?logo=openai)
+![Embedding](https://img.shields.io/badge/Embedding-text--embedding--3--large-412991)
+![Tavily](https://img.shields.io/badge/Search-Tavily-0052CC)
+![Docker](https://img.shields.io/badge/Qdrant-Docker-2496ED?logo=docker)
+![License](https://img.shields.io/badge/License-MIT-blue)
 
 ---
 
-## 技术栈
+<a id="english"></a>
 
-| 层次 | 技术 |
-|------|------|
-| 大模型 | GPT-4 / Claude / DeepSeek（OpenAI 兼容接口） |
-| 向量数据库 | Qdrant（collection: `kb_main`） |
-| Embedding | Vector Engine / OpenAI text-embedding-3-large |
-| 知识爬虫编排 | OpenClaw Agent（24/7 常驻） |
-| 网络搜索 | Tavily Search（主）/ Baidu Search（备） |
-| 爬虫脚本 | Python 3 |
-| Skill 实现 | Node.js (ESM) |
+## TL;DR
 
----
+WebClaw is the **knowledge and RAG layer** of an AI-driven pentest platform. The core insight: raw LLM reasoning for security tasks degrades quickly without up-to-date vulnerability intelligence. WebClaw solves this with **OpenClaw** — a persistent agent that runs a 24/7 loop (search → fetch → LLM refine → chunk → embed → Qdrant ingest) across 50+ security topics. At decision time, the Orchestrator calls `POST /v1/retrieve` to semantically enrich its LLM prompt with fresh CVE/PoC context before choosing the next skill to execute.
 
-## 目录结构
+## Architecture · 架构
 
-```
-ragclaw/
-├── skills/                  # RAG 核心 Skill（Node.js）
-│   ├── rag-query/           # 语义检索：query.mjs → Qdrant top-k
-│   └── rag-ingest/          # 向量写入：ingest.mjs → chunk → embed → Qdrant
-├── openclawSkills/          # OpenClaw 预置 Skill 包
-│   ├── deep-research-pro/   # 深度解读与结构化摘要
-│   ├── pdf-extract/         # PDF 文本抽取
-│   ├── markdown-converter/  # 网页/文档转 Markdown
-│   └── ...
-├── rag_crawler/             # Python 知识获取流水线
-│   ├── crawler.py           # 主循环：搜索 → 抓取 → LLM 精炼 → 入库
-│   ├── skills_impl/         # 爬虫本地 Skill 实现
-│   ├── topics.txt           # 爬取主题列表
-│   ├── CONFIG.md            # 详细 API/环境变量配置说明
-│   └── requirements.txt     # Python 依赖
-├── kb-openclaw/             # 知识库架构文档与使命配置
-│   └── mission/             # OpenClaw 系统提示词与 Runbook
-├── systemPrompt/            # OpenClaw Agent 系统提示文件
-├── docs/                    # 设计文档
-├── 基本要求.md              # 赛题说明与量化技术指标
-└── 自动化渗透测试平台-架构设计文档.md   # 完整架构设计文档
+```mermaid
+flowchart LR
+    subgraph OpenClaw["OpenClaw Agent · 24/7"]
+        Tavily["Tavily / Baidu Search"]
+        Fetch["url-reader / pdf-extract"]
+        Refine["deep-research-pro\n(LLM summarize)"]
+        Ingest["rag-ingest\n(chunk → embed → Qdrant)"]
+        Tavily --> Fetch --> Refine --> Ingest
+    end
+
+    Qdrant[("Qdrant\nkb_main")]
+    Ingest --> Qdrant
+
+    subgraph Orchestrator["Orchestrator (state machine)"]
+        RAG["POST /v1/retrieve\nrag-query top-k"]
+        LLM["LLM Decision Engine\nPOST /v1/decide"]
+        Exec["Skill Executor\nPOST /v1/execute"]
+        Trace["Trace & Report\nPOST /v1/events"]
+    end
+
+    Qdrant --> RAG --> LLM --> Exec
+    Exec --> Trace
+    LLM --> Trace
 ```
 
----
+### PTES phase flow
 
-## 快速开始
+```
+Pre-engagement → Intelligence Gathering → Threat Modeling
+    → Vulnerability Analysis → Exploitation → Post-Exploitation → Reporting
+```
 
-### 1. 环境准备
+Phase transitions only after **all sub-tasks reach terminal state** (done / failed / timeout).
+
+## Module contracts (REST / JSON Schema)
+
+| Caller → Callee | Endpoint | Key I/O |
+|---|---|---|
+| Orchestrator → RAG | `POST /v1/retrieve` | in: `phase, query, target_context_snapshot` · out: `chunks[]` (source, type, cve_id) |
+| Orchestrator → LLM | `POST /v1/decide` | in: `current_phase, history_summary` · out: `action_type, skill_id, params` |
+| Orchestrator → Skill | `POST /v1/execute` | in: `skill_id, target, params` · out: `status, parsed_artifacts, raw_stdout` |
+| Any → Trace | `POST /v1/events` | `task_id, event_type, source_module, payload` (fire-and-forget) |
+| Any → Report | `POST /v1/reports/generate` | in: `task_id, options` · out: `report_id, download_url` |
+
+Full JSON Schema: `自动化渗透测试平台-架构设计文档.md` §12.
+
+## Quickstart
 
 ```bash
-# Python 依赖
+# 1. Python deps
 pip install -r rag_crawler/requirements.txt
 
-# Node.js 依赖（每个 Skill 独立）
+# 2. Node.js deps (each skill is independent)
 cd skills/rag-query && npm install
 cd skills/rag-ingest && npm install
-```
 
-### 2. 配置环境变量
+# 3. Qdrant
+docker run -d -p 6333:6333 qdrant/qdrant
 
-复制并修改 `rag_crawler/env.example`：
-
-```bash
+# 4. env
 cp rag_crawler/env.example rag_crawler/.env
-```
+$EDITOR rag_crawler/.env    # fill OPENAI_API_KEY + TAVILY_API_KEY
 
-最小配置（仅运行 RAG 爬虫）：
+# 5. start the knowledge crawler
+cd rag_crawler && python crawler.py
 
-```env
-OPENAI_API_KEY=sk-...
-OPENAI_BASE_URL=https://api.openai.com/v1
-OPENAI_MODEL=gpt-4o-mini
-TAVILY_API_KEY=tvly-...
-QDRANT_URL=http://127.0.0.1:6333
-EMBED_API_KEY=...              # 可与 OPENAI_API_KEY 相同
-EMBED_BASE_URL=...             # Embedding 服务地址
-```
-
-详细配置说明见 `rag_crawler/CONFIG.md`。
-
-### 3. 启动 Qdrant
-
-```bash
-docker run -p 6333:6333 qdrant/qdrant
-```
-
-### 4. 运行知识爬虫
-
-```bash
-cd rag_crawler
-python crawler.py
-
-# 不调 LLM，仅抓取原文入库
+# skip LLM calls — raw ingest only (fast bootstrap)
 OPENCLAW_SKIP_LLM=1 python crawler.py
-```
 
-### 5. 知识库检索
+# single topic
+python crawler.py --topic "Struts2 S2-045"
 
-```bash
+# 6. query the knowledge base
 node skills/rag-query/scripts/query.mjs "Struts2 S2-045 漏洞检测"
 node skills/rag-query/scripts/query.mjs --query "CVE-2017-5638" --top-k 5 --topic-tags "cve,poc"
 ```
 
----
+### Minimum env
 
-## 知识获取流水线
-
-OpenClaw Agent 作为持续运行的知识编排者，执行以下单轮流程：
-
-```
-rag-query（查重）→ tavily-search（发现 URL）→ url-reader / pdf-extract（抓取）
-    → deep-research-pro / summarize（精炼）→ rag-ingest（写入 Qdrant）
+```env
+OPENAI_API_KEY=sk-...
+TAVILY_API_KEY=tvly-...
+QDRANT_URL=http://127.0.0.1:6333
 ```
 
-`rag-ingest` 仅负责 chunk → embedding → 写入，不含抓取或清洗逻辑。
+Detailed variable reference: `rag_crawler/CONFIG.md`.
 
----
+## Technical highlights · 技术亮点 (STAR)
 
-## 核心 API 接口（模块间通信）
+<details>
+<summary><b>📚 Self-updating security knowledge base</b> — OpenClaw 24/7 ingest loop</summary>
 
-| 调用方 → 被调方 | Endpoint | 关键字段 |
+- **S**: Static vulnerability datasets go stale within weeks; LLM pre-training data has a knowledge cutoff. A pentest platform that relies on memorized CVE knowledge will miss newly disclosed vulnerabilities.
+- **A**: OpenClaw Agent runs a continuous loop: Tavily/Baidu search for seeded topics → url-reader / pdf-extract → LLM `deep-research-pro` skill distills raw HTML/PDF into structured security summaries → `rag-ingest` chunks, embeds, and writes to Qdrant `kb_main`. The `OPENCLAW_SKIP_LLM=1` flag allows raw-ingest bootstrapping without LLM cost.
+- **R**: The knowledge base grows without human intervention. The Orchestrator always retrieves the freshest context at decision time.
+</details>
+
+<details>
+<summary><b>🔗 Stateless modules with JSON-Schema-validated contracts</b></summary>
+
+- **A**: Only the Orchestrator holds state. All other modules (RAG, LLM, Executor, Trace) are stateless REST services. Every cross-module API has a published JSON Schema; CI mocks validate against the schema so interface drift is caught before integration.
+- Why it matters: you can replace the LLM backend (GPT → Claude → DeepSeek) by swapping one service without touching the Orchestrator.
+</details>
+
+<details>
+<summary><b>🛡️ Repetition prevention without extra state</b></summary>
+
+Classic agentic loops repeat tool calls when the LLM forgets recent history. WebClaw injects **"duplicate warning" markers** directly into the LLM input message when the same `skill_id + params` fingerprint already appears in the phase history — no separate dedup state, no extra API call. The Orchestrator's phase task table remains the single source of truth.
+</details>
+
+<details>
+<summary><b>⚡ Sync/async dispatch by task duration</b></summary>
+
+Short skills (≤ 2 min, e.g. Nmap SYN scan, Nuclei quick scan) are dispatched synchronously with a hard timeout. Long skills (e.g. full Metasploit brute-force, multi-target Nuclei template run) go into the async RabbitMQ queue. The Orchestrator only blocks on sync calls; async completions are delivered as events to `POST /v1/events`. This design lets concurrent targets share the Executor pool without starving each other.
+</details>
+
+## Quantitative targets · 量化技术指标
+
+| Metric | Baseline | Advanced |
 |---|---|---|
-| Orchestrator → LLM 决策 | `POST /v1/decide` | 输入：`task_id, current_phase, target_context, history_summary`<br>输出：`action_type, skill_id, params, reasoning` |
-| Orchestrator → Skill 执行 | `POST /v1/execute` | 输入：`task_id, skill_id, target, params`<br>输出：`status, parsed_artifacts, raw_stdout` |
-| 任意模块 → 留痕 | `POST /v1/events` | `task_id, timestamp, event_type, source_module, payload` |
-| Orchestrator → RAG 检索 | `POST /v1/retrieve` | 输入：`task_id, phase, query, target_context_snapshot`<br>输出：`chunks[]`（含 `source, type, cve_id`） |
-| 任意 → 报告生成 | `POST /v1/reports/generate` | 输入：`task_id, options`<br>输出：`report_id, status, download_url` |
+| Vulnerability detection rate | ≥ 90% | ≥ 95% |
+| False-positive rate | ≤ 10% | ≤ 5% |
+| Tools integrated | ≥ 30 | ≥ 50 |
+| Time per target | ≤ 30 min | ≤ 15 min |
+| Concurrent targets | ≥ 1 | ≥ 3 |
+| Multi-stage chain | single | multi-stage |
+| Report quality | basic | full + remediation |
+| OS targets | Linux or Windows | Linux + Windows |
 
-完整 JSON Schema 定义见 `自动化渗透测试平台-架构设计文档.md` §12。
+## Validated targets · 靶机验证
+
+**Vulhub (Easy)** — Struts2 S2-045/S2-057, ThinkPHP 5.0.23-RCE, WebLogic CVE-2023-21839, Tomcat CVE-2017-12615, PHP CVE-2019-11043, ActiveMQ CVE-2022-41678, JBoss CVE-2017-7504, Shiro CVE-2016-4437, Fastjson 1.2.24/1.2.47 RCE, Django CVE-2022-34265, Flask SSTI, GeoServer CVE-2024-36401
+
+**Vulnhub (Medium/Hard)** — Tomato, Earth, Jangow, Phineas, Odin
+
+## Roadmap · 路线图
+
+- [x] Qdrant RAG knowledge base (kb_main collection)
+- [x] OpenClaw 24/7 ingest pipeline with LLM refinement
+- [x] rag-query / rag-ingest Node.js ESM skills
+- [x] JSON-Schema-validated module contracts
+- [x] Sync/async skill dispatch design
+- [ ] Live integration with PentestPlatform Orchestrator (replace mock `POST /v1/retrieve`)
+- [ ] Scheduled topic refresh with staleness scoring
+- [ ] CVE severity tagging on ingest (CVSS score from NVD API)
+- [ ] Kubernetes deployment for multi-instance crawler scale-out
+
+## Repo layout
+
+```
+WebClaw/
+├── skills/                  rag-query + rag-ingest (Node.js ESM)
+├── openclawSkills/          pre-built OpenClaw skill pack
+│   ├── deep-research-pro/   LLM-powered structured summarization
+│   ├── pdf-extract/         PDF text extraction
+│   ├── markdown-converter/  HTML/doc → Markdown
+│   └── …
+├── rag_crawler/             Python knowledge acquisition pipeline
+│   ├── crawler.py           main loop: search → fetch → refine → ingest
+│   ├── skills_impl/         local skill implementations
+│   ├── topics.txt           seed topics
+│   ├── CONFIG.md            env var reference
+│   └── requirements.txt
+├── kb-openclaw/             KB architecture docs + OpenClaw mission configs
+├── systemPrompt/            OpenClaw agent system prompts (SOUL, TOOL, AGENTS…)
+├── docs/                    design documents
+├── search_topics.json       structured topic definitions
+├── clean_content.py         KB content cleaning utility
+└── 自动化渗透测试平台-架构设计文档.md   full system design (§12 = JSON Schemas)
+```
 
 ---
 
-## 量化技术指标
+<a id="中文"></a>
 
-| 指标 | 基础要求 | 进阶要求 |
-|------|---------|---------|
-| 漏洞检测率 | ≥ 90% | ≥ 95% |
-| 误报率 | ≤ 10% | ≤ 5% |
-| 工具集成数量 | ≥ 30 个 | ≥ 50 个 |
-| 单目标测试时间 | ≤ 30 分钟 | ≤ 15 分钟 |
-| 并发测试能力 | ≥ 1 个目标 | ≥ 3 个目标 |
-| 多阶段攻击支持 | 单阶段 | 多阶段链式 |
-| 报告生成 | 基础报告 | 详细报告 + 修复建议 |
-| 目标平台 | Linux 或 Windows | Linux + Windows |
+## 中文速读
 
----
+- **是什么**：WebClaw 是 AI 渗透测试平台的**知识增强层**。OpenClaw Agent 24/7 运行「搜索→抓取→LLM 精炼→向量入库」循环，持续为 Orchestrator 的决策引擎提供最新 CVE/PoC 情报。
+- **核心价值**：大模型预训练知识有截止日期；WebClaw 用自维护的 Qdrant 知识库解决「知识过时」问题，每次 LLM 决策前注入当前最新的安全语义上下文。
+- **技术特色**：
+  - **无状态模块化**：只有 Orchestrator 有状态，其余模块（RAG/LLM/Executor/Trace）均无状态 REST 服务，接口有 JSON Schema 约束；
+  - **重复防控轻量化**：用「重复警告注入」替代独立去重状态机，Orchestrator 任务表即唯一事实来源；
+  - **同步/异步调度**：短任务（≤2 min）同步含超时，长扫描走 RabbitMQ 异步队列，多目标共享 Executor 不互相阻塞。
 
-## 靶机环境
+## License
 
-平台验证覆盖以下靶机环境：
-
-**Vulhub（简单）**：Struts2 S2-045/S2-057、ThinkPHP 5.0.23-RCE、WebLogic CVE-2023-21839、Tomcat CVE-2017-12615、PHP CVE-2019-11043、ActiveMQ CVE-2022-41678、JBoss CVE-2017-7504、Shiro CVE-2016-4437、Fastjson 1.2.24/1.2.47 RCE、Django CVE-2022-34265、Flask SSTI、GeoServer CVE-2024-36401
-
-**Vulnhub（中等/困难）**：Tomato、Earth、Jangow、Phineas、Odin
+MIT © [Seal-Re](https://github.com/Seal-Re)
